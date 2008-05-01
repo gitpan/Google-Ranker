@@ -9,11 +9,11 @@ Google::Ranker - Find the ranking of a site/result against a search
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =head1 SYNOPSIS
@@ -21,6 +21,7 @@ our $VERSION = '0.01';
     use Google::Ranker;
     
     my $rank = Google::Ranker->rank("search.cpan.org", { q => "perl network", key => ..., referer => ... });
+    # (Make sure to get a valid key and referer from http://code.google.com/apis/ajaxsearch/signup.html first)
 
     # Or pass in a prepared search:
     
@@ -32,6 +33,14 @@ our $VERSION = '0.01';
     my $search = Google::Search->Video(q => "tay zonday", ...);
     my $rank = Google::Ranker->rank(sub { $_[0]->titleNoFormatting =~ m/Chocolate Rain/i }, $search);
 
+=head1 DESCRIPTION
+
+Google::Ranker will determine the rank of a result matching some criteria within a search. The search
+can be done on any of Google's search services, including web, local, news, blogs, images, videos, and books.
+
+This connects to Google's AJAX Search API (L<http://code.google.com/apis/ajaxsearch/>) and is built upon
+L<Google::Search>
+
 =cut
 
 use Google::Search;
@@ -40,7 +49,7 @@ use Carp;
 
 =head1 METHODS
 
-Google::Rank->rank( <match>, <search> )
+=head2 Google::Rank->rank( <match>, <search> )
 
 Returns the numeric rank for <match> in <search>
 
@@ -65,6 +74,15 @@ sub rank {
     my $matcher = shift;
     my $search = shift;
 
+    if (defined $search && ref $search eq "") {
+        warn "\n# ", __FILE__, ":", __LINE__, "\n", <<_END_;
+# Running a search without a valid API key/referer
+# Pass in a key => ... and referer => ... to disable this warning
+# You can get both at http://code.google.com/apis/ajaxsearch/signup.html
+
+_END_
+        $search = { q => $search };
+    }
     if (ref $search eq "HASH") {
         $search = Google::Search->Web(%$search);
     }
